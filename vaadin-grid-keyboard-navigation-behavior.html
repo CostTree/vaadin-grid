@@ -37,6 +37,7 @@
       'down': '_onArrowDown',
       'end': '_onEnd',
       'enter': '_onEnter',
+      'shift+enter': '_onShiftEnter',
       'esc': '_onEscape',
       'f2': '_onF2',
       'home': '_onHome',
@@ -60,6 +61,10 @@
 
     _onEnter: function(e) {
       this.$.scroller._onEnter(e);
+    },
+
+    _onShiftEnter: function(e) {
+      this.$.scroller._onShiftEnter(e);
     },
 
     _onEscape: function(e) {
@@ -208,8 +213,18 @@
     },
 
     _onTab: function(e) {
-      if (this.interacting || !this._virtualFocus) {
+      if (!this._virtualFocus) {
         return;
+      } else if (this.interacting){
+          e.preventDefault();
+
+          this.navigating = true;
+          this._virtualFocus.focusRight();
+
+          this._ensureVirtualFocusInViewport();
+          this.navigating = false;
+          this._moveFocusToFocusTarget();
+          return;
       }
 
       if (this.navigating) {
@@ -258,6 +273,15 @@
 
     _onShiftTab: function(e) {
       if (this.interacting) {
+          e.preventDefault();
+
+          this.navigating = true;
+          this._virtualFocus.focusLeft();
+
+          this._ensureVirtualFocusInViewport();
+          this.navigating = false;
+          this._moveFocusToFocusTarget();
+          return;
         return;
       }
 
@@ -442,9 +466,26 @@
         this._moveFocusToFocusTarget();
       } else if (e.detail.keyboardEvent.target.localName === 'input' &&
                  e.detail.keyboardEvent.target.type === 'text') {
-        this.interacting = false;
-        this._onTab(e); // revert to navigation
+          e.preventDefault();
+
+          this._virtualFocus.focusDown();
+          this._ensureVirtualFocusInViewport();
+          this._moveFocusToFocusTarget();
       }
+    },
+
+    _onShiftEnter: function(e) {
+        if (!this.interacting) {
+            e.preventDefault();
+            this._moveFocusToFocusTarget();
+        } else if (e.detail.keyboardEvent.target.localName === 'input' &&
+            e.detail.keyboardEvent.target.type === 'text') {
+            e.preventDefault();
+
+            this._virtualFocus.focusUp();
+            this._ensureVirtualFocusInViewport();
+            this._moveFocusToFocusTarget();
+        }
     },
 
     _onEscape: function(e) {
